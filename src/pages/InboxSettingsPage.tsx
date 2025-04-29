@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Plus, Trash2, Settings2, Filter, ChevronDown, Users, MessageSquare, Bell, ArrowUpRight } from 'lucide-react';
 import SettingsLayout from '../components/settings/SettingsLayout';
 import { useNavigate } from 'react-router-dom';
+import NewInboxModal from '../components/modals/NewInboxModal';
 
 interface Inbox {
   id: string;
@@ -57,6 +58,10 @@ const InboxSettingsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState<'grid' | 'list'>('grid');
   const [selectedType, setSelectedType] = useState<'all' | 'whatsapp' | 'instagram' | 'messenger'>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [selectedRole, setSelectedRole] = useState<'all' | 'admin' | 'basic' | 'manager'>('all');
+  const [showNewInboxModal, setShowNewInboxModal] = useState(false);
 
   const filteredInboxes = mockInboxes.filter(inbox => 
     (selectedType === 'all' || inbox.type === selectedType) &&
@@ -82,7 +87,10 @@ const InboxSettingsPage: React.FC = () => {
               Filtros
               <ChevronDown className="w-4 h-4 ml-2" />
             </button>
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center shadow-sm">
+            <button 
+              onClick={() => setShowNewInboxModal(true)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+            >
               <Plus className="w-5 h-5 mr-2" />
               Nova caixa
             </button>
@@ -233,6 +241,15 @@ const InboxSettingsPage: React.FC = () => {
           ))}
         </div>
       </div>
+      
+      <NewInboxModal
+        isOpen={showNewInboxModal}
+        onClose={() => setShowNewInboxModal(false)}
+        onSubmit={(data) => {
+          console.log('New inbox data:', data);
+          setShowNewInboxModal(false);
+        }}
+      />
     </SettingsLayout>
   );
 };

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, ChevronDown, Settings2, Trash2, Mail, Shield, Clock, ArrowUpRight } from 'lucide-react';
 import SettingsLayout from '../components/settings/SettingsLayout';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import AddUserModal from '../components/modals/AddUserModal';
+import EditUserModal from '../components/modals/EditUserModal';
 
 interface User {
   id: string;
@@ -18,12 +20,12 @@ interface User {
 const mockUsers: User[] = [
   {
     id: '1',
-    name: 'abraao.pinkapp',
-    username: 'abraao.pinkapp',
-    email: 'pink.abraao.pinkapp@pinkapp.com',
-    accessLevel: 'Básico',
-    status: 'Desativado',
-    lastAccess: '2 dias atrás'
+    name: 'Adalberto',
+    username: 'adalberto.pinkapp',
+    email: 'adalberto@gmail.com',
+    accessLevel: 'Gerente',
+    status: 'Ativo',
+    lastAccess: '2 horas atrás'
   },
   {
     id: '2',
@@ -58,8 +60,7 @@ const mockUsers: User[] = [
     username: 'onboarding.pinkapp',
     email: 'onboarding@pinkapp.com',
     accessLevel: 'Admin',
-    status: 'Ativo',
-    lastAccess: '27 minutos atrás'
+    status: 'Ativo'
   }
 ];
 
@@ -69,8 +70,101 @@ const UsersPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedRole, setSelectedRole] = useState<'all' | 'admin' | 'basic' | 'manager'>('all');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState({
+    total: 0,
+    active: 0,
+    lastAccess: '',
+    activityRate: 0
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  const filteredUsers = mockUsers.filter(user => {
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const calculateMetrics = (users: User[]) => {
+    const total = users.length;
+    const active = users.filter(user => user.status === 'Ativo').length;
+    
+    // Find most recent access
+    const lastAccess = users.reduce((latest, user) => {
+      if (!user.lastAccess) return latest;
+      const userDate = new Date(user.lastAccess);
+      return !latest || userDate > new Date(latest) ? user.lastAccess : latest;
+    }, '');
+
+    // Calculate activity rate (active users / total users)
+    const activityRate = total > 0 ? Math.round((active / total) * 100) : 0;
+
+    setMetrics({
+      total,
+      active,
+      lastAccess: lastAccess || '2 min atrás',
+      activityRate
+    });
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, username, email, role, status, updated_at')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedUsers = data.map(user => ({
+        id: user.id,
+        name: user.full_name,
+        username: user.username,
+        email: user.email,
+        accessLevel: user.role || 'Básico',
+        status: user.status === 'active' ? 'Ativo' : 'Desativado',
+        lastAccess: formatLastAccess(user.updated_at)
+      }));
+
+      setUsers(formattedUsers);
+      calculateMetrics(formattedUsers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error fetching users');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUser = (userId: string) => {
+    setSelectedUserId(userId);
+    setShowEditModal(true);
+  };
+
+  const formatLastAccess = (date: string) => {
+    const now = new Date();
+    const lastAccess = new Date(date);
+    const diffTime = Math.abs(now.getTime() - lastAccess.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+
+    if (diffDays > 0) {
+      return diffDays === 1 ? '1 dia atrás' : `${diffDays} dias atrás`;
+    } else if (diffHours > 0) {
+      return diffHours === 1 ? '1 hora atrás' : `${diffHours} horas atrás`;
+    } else {
+      return diffMinutes === 1 ? '1 minuto atrás' : `${diffMinutes} minutos atrás`;
+    }
+  };
+
+  const handleUserCreated = () => {
+    fetchUsers(); // Refresh the users list
+  };
+
+  const filteredUsers = users.filter(user => {
     const matchesSearch = Object.values(user).some(value => 
       value.toString().toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -122,10 +216,10 @@ const UsersPage: React.FC = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Total de usuários', value: '156', icon: Mail, color: 'bg-blue-500' },
-            { label: 'Usuários ativos', value: '124', icon: Shield, color: 'bg-green-500' },
-            { label: 'Último acesso', value: '2 min atrás', icon: Clock, color: 'bg-purple-500' },
-            { label: 'Taxa de atividade', value: '94%', icon: ArrowUpRight, color: 'bg-orange-500' }
+            { label: 'Total de usuários', value: metrics.total.toString(), icon: Mail, color: 'bg-blue-500' },
+            { label: 'Usuários ativos', value: metrics.active.toString(), icon: Shield, color: 'bg-green-500' },
+            { label: 'Último acesso', value: metrics.lastAccess, icon: Clock, color: 'bg-purple-500' },
+            { label: 'Taxa de atividade', value: `${metrics.activityRate}%`, icon: ArrowUpRight, color: 'bg-orange-500' }
           ].map((stat, i) => (
             <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100">
               <div className="flex items-center justify-between mb-4">
@@ -204,7 +298,7 @@ const UsersPage: React.FC = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                          {user.name[0].toUpperCase()}
+                          {user.name ? user.name[0].toUpperCase() : 'U'}
                         </div>
                         <span className="ml-3 text-sm font-medium text-gray-900">{user.name}</span>
                       </div>
@@ -231,7 +325,10 @@ const UsersPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <button 
+                          onClick={() => handleEditUser(user.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
                           <Settings2 className="w-4 h-4" />
                         </button>
                         <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
@@ -258,14 +355,25 @@ const UsersPage: React.FC = () => {
             </div>
           </div>
         </div>
+        {selectedUserId && (
+          <EditUserModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            userId={selectedUserId}
+            onSubmit={() => {
+              fetchUsers();
+              setShowEditModal(false);
+            }}
+          />
+        )}
       </div>
 
       <AddUserModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSubmit={(userData) => {
-          console.log('New user:', userData);
-          setShowAddModal(false);
+        onSubmit={() => {
+          handleUserCreated();
+          setShowAddModal(false); 
         }}
       />
     </SettingsLayout>

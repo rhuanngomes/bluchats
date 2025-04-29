@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, Plus, X, Filter, ChevronDown, Trash2, MoreVertical, ChevronLeft, ChevronRight, Mail, EyeOff, LogOut } from 'lucide-react';
+import { Search, ArrowLeft, Plus, X, Filter, ChevronDown, Trash2, MoreVertical, ChevronLeft, ChevronRight, Mail, EyeOff, LogOut, Globe2 } from 'lucide-react';
 
 interface FilterGroup {
   id: string;
@@ -119,6 +119,34 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, onClose, onMarkUnread, 
 
 const DirectoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const [showComingSoon, setShowComingSoon] = useState(true);
+
+  if (showComingSoon) {
+    return (
+      <div className="min-h-screen bg-gray-50 relative">
+        <div className="absolute inset-0 backdrop-blur-sm bg-white/50 flex items-center justify-center z-50">
+          <div className="max-w-md text-center p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+            <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-6">
+              <Globe2 className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Diretório em desenvolvimento
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Estamos trabalhando para trazer uma experiência incrível de gerenciamento de conversas. Em breve você poderá acessar todas as suas conversas em um só lugar.
+            </p>
+            <button
+              onClick={() => navigate('/app')}
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Voltar para o app
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = useState('Todas as conversas');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeMenu, setActiveMenu] = useState<string | null>(null);

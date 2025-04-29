@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft, Camera, User, Phone, AtSign, Building2, Clock, UserCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const MyAccountPage: React.FC = () => {
@@ -8,9 +8,12 @@ const MyAccountPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
     full_name: '',
+    email: '',
     avatar_url: '',
     phone: '',
-    status: 'online'
+    status: 'online',
+    company_name: '',
+    role: '',
   });
 
   useEffect(() => {
@@ -23,7 +26,7 @@ const MyAccountPage: React.FC = () => {
       if (user?.id) {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('full_name, email, avatar_url, phone, status, company_name, role')
           .eq('id', user.id)
           .single();
 
@@ -35,7 +38,7 @@ const MyAccountPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -95,112 +98,190 @@ const MyAccountPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1f2e]">
-      <div className="max-w-2xl mx-auto px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         <button
           onClick={() => navigate('/app')}
-          className="flex items-center text-gray-400 hover:text-gray-200 mb-8 group"
+          className="flex items-center text-gray-500 hover:text-gray-900 mb-12 px-4 py-2 rounded-xl hover:bg-gray-100 transition-all group"
         >
           <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
           <span>Voltar para o app</span>
         </button>
 
-        <div className="bg-[#1e2538] rounded-3xl shadow-2xl overflow-hidden">
-          <div className="p-8 border-b border-gray-800">
-            <h1 className="text-2xl font-semibold text-white">Editar perfil</h1>
-            <p className="text-gray-400 mt-1">
-              Atualize suas informações pessoais
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            <div className="flex flex-col items-center space-y-4">
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-10">
+            <div className="flex items-center space-x-6 mb-12">
               <div className="relative group">
-                <div className="w-32 h-32 rounded-full bg-gray-700 overflow-hidden">
-                  <img
-                    src={profile.avatar_url || 'https://via.placeholder.com/150'}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <label className="cursor-pointer p-2 rounded-full bg-gray-800/80 hover:bg-gray-700/80 transition-colors">
-                      <Camera className="w-6 h-6 text-white" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarChange}
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 p-1">
+                  <div className="w-full h-full rounded-xl overflow-hidden bg-white">
+                    {profile.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
                       />
-                    </label>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <UserCircle2 className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                 </div>
+                <label className="absolute -bottom-2 -right-2 p-2 bg-blue-600 rounded-xl cursor-pointer hover:bg-blue-700 transition-colors group-hover:scale-110">
+                  <Camera className="w-4 h-4 text-white" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </label>
               </div>
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-white">Foto do Perfil</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  JPG, GIF ou PNG. Tamanho máximo de 2MB.
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Editar perfil
+                </h1>
+                <p className="text-gray-600 mt-2">
+                  Atualize suas informações pessoais e preferências
                 </p>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Nome completo
-                </label>
-                <input
-                  type="text"
-                  value={profile.full_name}
-                  onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                  className="w-full px-4 py-3 bg-[#252b3b] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  placeholder="Seu nome completo"
-                />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Nome completo
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={profile.full_name}
+                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="email"
+                      value={profile.email}
+                      disabled
+                      className="w-full pl-12 pr-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Empresa
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={profile.company_name}
+                      onChange={(e) => setProfile({ ...profile, company_name: e.target.value })}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Nome da sua empresa"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cargo
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={profile.role}
+                      onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Seu cargo na empresa"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Telefone
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="tel"
+                      value={profile.phone}
+                      onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="+55 (00) 00000-0000"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <div className="relative">
+                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={profile.status}
+                      onChange={(e) => setProfile({ ...profile, status: e.target.value })}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Seu status atual"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Número de telefone
-                </label>
-                <input
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                  className="w-full px-4 py-3 bg-[#252b3b] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  placeholder="+55 (00) 00000-0000"
-                />
+              <div className="flex items-center justify-end space-x-4 pt-8 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => navigate('/app')}
+                  className="px-6 py-2.5 text-gray-500 hover:text-gray-700 font-medium transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg shadow-blue-500/20"
+                >
+                  {loading ? 'Salvando...' : 'Salvar alterações'}
+                </button>
               </div>
+            </form>
+          </div>
 
+          <div className="px-10 py-6 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Recado
-                </label>
-                <input
-                  type="text"
-                  value={profile.status}
-                  onChange={(e) => setProfile({ ...profile, status: e.target.value })}
-                  className="w-full px-4 py-3 bg-[#252b3b] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-                  placeholder="Seu status"
-                />
+                <h3 className="text-sm font-medium text-gray-700">
+                  Zona de perigo
+                </h3>
+                <p className="text-xs text-gray-600 mt-1">
+                  Ações irreversíveis para sua conta
+                </p>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-4 pt-8 border-t border-gray-800">
               <button
                 type="button"
-                onClick={() => navigate('/app')}
-                className="px-6 py-2.5 text-gray-400 hover:text-white font-medium transition-colors"
+                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium"
               >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-              >
-                {loading ? 'Salvando...' : 'Salvar alterações'}
+                Excluir conta
               </button>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>

@@ -38,6 +38,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasWhatsApp, setHasWhatsApp] = useState(true);
 
   if (!isOpen) return null;
 
@@ -47,13 +48,28 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
     setLoading(true);
 
     try {
+      // Validate form data
+      if (!formData.name || !formData.email || !formData.password || !formData.username) {
+        throw new Error('Por favor, preencha todos os campos obrigatórios');
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('A senha deve ter pelo menos 6 caracteres');
+      }
+
+      if (hasWhatsApp && !formData.whatsapp) {
+        throw new Error('Por favor, insira um número de WhatsApp ou marque a opção "Usuário não possui WhatsApp"');
+      }
+
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           data: {
-            full_name: formData.name,
+            full_name: formData.name.trim(),
+            username: formData.username.trim(),
+            company_name: formData.company_name?.trim(),
           }
         }
       });
@@ -65,7 +81,9 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
-            username: formData.username,
+            username: formData.username.trim(),
+            full_name: formData.name.trim(),
+            phone: hasWhatsApp ? formData.whatsapp.trim() : null,
             role: formData.accessLevel,
             status: formData.isRestricted ? 'restricted' : 'active'
           })
@@ -89,6 +107,11 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl">
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
         <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
@@ -105,11 +128,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
           >
             <X className="w-6 h-6" />
           </button>
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -154,7 +172,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
                 onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 placeholder="+55 (00) 00000-0000"
+                disabled={!hasWhatsApp}
               />
+            </div>
+            <div className="flex items-center mt-2">
+              <input
+                type="checkbox"
+                id="noWhatsapp"
+                checked={!hasWhatsApp}
+                onChange={(e) => setHasWhatsApp(!e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="noWhatsapp" className="ml-2 text-sm text-gray-600">
+                Usuário não possui WhatsApp
+              </label>
             </div>
           </div>
 
@@ -262,7 +293,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({ isOpen, onClose, onSubmit }
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Criando usuário...' : 'Criar usuário'}
             </button>

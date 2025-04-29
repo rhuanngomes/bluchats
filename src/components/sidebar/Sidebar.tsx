@@ -45,11 +45,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [selectedPeriod, setSelectedPeriod] = useState('today');
   const [selectedTag, setSelectedTag] = useState('all');
   const [showSettings, setShowSettings] = useState(false);
-  const [conversations, setConversations] = useState(mockConversations);
+  const [conversations, setConversations] = useState(conversationGroups);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showNewConversationModal, setShowNewConversationModal] = useState(false);
-  const [userStatus, setUserStatus] = useState<'online' | 'away' | 'busy' | 'offline'>('online');
+  const [userStatus, setUserStatus] = useState<'online' | 'busy' | 'offline'>('online');
   const [showUserSelection, setShowUserSelection] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const navigate = useNavigate();
@@ -102,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     })
   );
 
-  const handleStatusChange = (status: 'online' | 'away' | 'busy' | 'offline') => {
+  const handleStatusChange = (status: 'online' | 'busy' | 'offline') => {
     setUserStatus(status);
     // Here you would typically update the status in your backend
   };
@@ -159,6 +159,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const toggleSettings = () => {
     setShowSettings(!showSettings);
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/app/metrics');
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -308,12 +312,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           </button>
           <button
             onClick={() => navigate('/directory')}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative"
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative group"
           >
             <Globe2 className="w-5 h-5" />
+            <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
+              Em breve
+            </div>
           </button>
           <button
-            onClick={onSettingsClick}
+            onClick={handleSettingsClick}
             className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full relative"
           >
             <Settings className="w-5 h-5" />

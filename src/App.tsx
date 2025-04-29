@@ -12,6 +12,7 @@ import PricingPage from './pages/PricingPage';
 import DirectoryPage from './pages/DirectoryPage.tsx';
 import InboxSettingsPage from './pages/InboxSettingsPage';
 import UsersPage from './pages/UsersPage';
+import MetricsPage from './pages/MetricsPage';
 import OmnichannelPage from './pages/features/OmnichannelPage';
 import CustomerSupportPage from './pages/features/CustomerSupportPage';
 import ProfilePage from './pages/ProfilePage';
@@ -35,6 +36,7 @@ function App() {
         <Route path="/app/inboxes" element={<InboxSettingsPage />} />
         <Route path="/app/profile" element={<ProfilePage />} />
         <Route path="/app/billing" element={<BillingPage />} />
+        <Route path="/app/metrics" element={<MetricsPage />} />
         <Route path="/app/users" element={<UsersPage />} />
         <Route path="/app/my-account" element={<MyAccountPage />} />
         <Route path="/app/integrations/whatsapp" element={<WhatsAppConfigPage />} />
